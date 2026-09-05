@@ -1011,6 +1011,110 @@ This gives us the best of both worlds. By containerizing PostgreSQL with a speci
 
 ---
 
+## ADR-002: UUIDv7 for Multi-Tenant Entity Primary Keys
+
+### Context
+In a multi-tenant SaaS ERP, business entities such as Tenants and Users require globally unique identifiers. Traditional auto-increment integers (`BIGINT`) present security risks (enumeration attacks, leaking tenant business volume/growth) and complicate future data sharding or replication. Conversely, traditional random UUIDs (UUIDv4) cause severe B-tree index fragmentation and random disk I/O under high write volumes.
+
+### Decision
+Use **RFC 9562 UUIDv7** identifiers for all core business entities (`tenants.id`, `users.id`) using Hibernate 7's `@UuidGenerator(style = UuidGenerator.Style.VERSION_7)` mapped to PostgreSQL native `UUID` column types. Global reference data (`roles.id`) continues to use `BIGSERIAL`.
+
+### Why?
+* **Index Locality & Write Throughput**: UUIDv7 embeds a 48-bit millisecond Unix timestamp in its most-significant bits. New keys sort chronologically, causing B-tree insertions to append monotonically to the right-hand edge of the index. This keeps hot index pages in PostgreSQL `shared_buffers` and avoids random leaf-page splits.
+* **Enumeration Defense**: UUIDv7 includes 74 bits of cryptographically secure pseudo-randomness, making IDs unguessable and preventing URL ID scraping.
+* **Distributed Generation**: IDs can be generated on application nodes without roundtrips to database sequences or coordination locks.
+
+### Alternatives Considered
+1. **Auto-Increment BIGINT**:
+   * *Rejected*: Exposes sequential numbers in REST URLs (`/api/v1/tenants/1`), allowing competitors to guess tenant counts and transaction volumes.
+2. **Random UUIDv4**:
+   * *Rejected*: Completely random distribution destroys B-tree index page locality once the index exceeds RAM, causing up to 50% index bloat and excessive disk thrashing.
+3. **Twitter Snowflake / ULID**:
+   * *Rejected*: Snowflake requires central worker ID coordination; ULID requires custom conversion for PostgreSQL native UUID storage. UUIDv7 is the IETF standard (RFC 9562) supported directly by Hibernate 7 and PostgreSQL.
+
+### Trade-offs
+* Consumes 16 bytes compared to 8 bytes for `BIGINT`.
+* Slightly higher storage overhead in foreign key indexes, fully justified by security, sharding readiness, and monotonic write performance.
+
+### Interview Questions
+1. *What is UUIDv7 and how does it differ from UUIDv4?*
+2. *Why do random UUIDs (UUIDv4) hurt B-tree index performance in PostgreSQL?*
+3. *How does UUIDv7 avoid page splits in relational databases?*
+4. *When would you still use BIGSERIAL instead of UUIDv7?*
+
+### My Interview Answer
+"In TexForge, we chose UUIDv7 for all primary keys on business entities like tenants and users. Standard UUIDv4 values are completely random, which scatters inserts across the entire B-tree index and causes heavy disk I/O and page splits once tables grow beyond memory cache. UUIDv7 solves this by encoding a 48-bit millisecond timestamp in the leading bits, making keys time-ordered and monotonic like an auto-incrementing integer, while retaining 74 bits of randomness to prevent enumeration attacks and eliminate coordination bottlenecks across distributed nodes."
+
+---
+
+## ADR-003: Platform vs. Tenant User Hierarchy & Compound Email Uniqueness
+
+### Context
+TexForge serves two distinct categories of users:
+1. **Platform Administrators (`SUPER_ADMIN`)**: Oversee platform health, billing, and tenant onboarding across the entire SaaS.
+2. **Tenant Users (`TENANT_ADMIN`, `EMPLOYEE`)**: Scoped strictly to an individual textile mill organization.
+
+Additionally, in textile manufacturing, external auditors, suppliers, or specialized contractors may work with multiple independent tenant mills using a single professional email address.
+
+### Decision
+1. **Hierarchy Rule**:
+   * `SUPER_ADMIN`: `tenant_id = NULL` (Platform-level user).
+   * `TENANT_ADMIN` & `EMPLOYEE`: `tenant_id = valid tenant UUID` (Tenant-scoped user).
+2. **Compound Uniqueness**:
+   * `CONSTRAINT uq_users_tenant_email UNIQUE(tenant_id, email)`: Enforces that an email is unique within a tenant, but allows the same email to exist across different tenants.
+3. **Partial Unique Index for Platform Users**:
+   * Because PostgreSQL treats multiple `NULL` values in standard `UNIQUE(tenant_id, email)` as distinct, we added a partial unique index:
+     `CREATE UNIQUE INDEX uq_platform_user_email ON users(email) WHERE tenant_id IS NULL;`
+   * This guarantees that platform administrator emails cannot be duplicated.
+
+### Why?
+* **Multi-Tenant Flexibility**: Allows cross-tenant contractor or auditor collaboration without requiring artificial email aliases (`john+mill1@gmail.com`).
+* **Platform Security**: Prevents identity collision and privilege escalation by separating platform administrative accounts from tenant-level organizational boundaries.
+
+### Alternatives Considered
+1. **Globally Unique Email Across Entire Database**:
+   * *Rejected*: Prevents users from participating in multiple tenant mills with their primary work email, and leaks tenant membership during registration.
+2. **System Tenant Row for Platform Admins**:
+   * *Rejected*: Introduces an artificial "system" tenant that pollutes tenant-level reporting and complicates tenant listing queries.
+
+### Interview Questions
+1. *Why did you make `tenant_id` nullable in the `users` table?*
+2. *How does PostgreSQL handle `NULL` in compound unique constraints?*
+3. *What is a partial index in PostgreSQL, and why did you use it for platform users?*
+4. *How does your design allow cross-tenant email reuse while preserving tenant isolation?*
+
+### My Interview Answer
+"We separated user identity into platform-level and tenant-level scopes. A `SUPER_ADMIN` has `tenant_id = NULL` because they govern the platform, whereas `TENANT_ADMIN` and `EMPLOYEE` require a non-null tenant reference. To support contractors who work across multiple textile mills, we applied a compound unique constraint on `(tenant_id, email)`. Because standard SQL treats NULLs as distinct in unique constraints, we also added a PostgreSQL partial unique index on `email WHERE tenant_id IS NULL`. This guarantees platform emails remain globally unique while enabling legitimate cross-tenant email reuse."
+
+---
+
+## ADR-004: Nullable Password Hash for Federated OAuth Compatibility
+
+### Context
+TexForge is architected to support both native email/password authentication and federated Single Sign-On (Google OAuth, Microsoft Entra). If the `password_hash` column is marked `NOT NULL`, registering an OAuth user would require storing a fake, randomly generated dummy password hash.
+
+### Decision
+Define `users.password_hash` as `NULLABLE`. Users registering or signing in exclusively via OAuth maintain `password_hash = NULL`. Future federated account links will be maintained in a separate `user_oauth_accounts` table.
+
+### Why?
+* **Security Hygiene**: Generating fake password hashes for SSO users creates confusion, potential bypass attack surfaces, and complicates password reset workflows.
+* **Clean Account State**: A `null` password hash immediately communicates that the user has not established local credentials, allowing the frontend to prompt for password setup if desired.
+
+### Alternatives Considered
+1. **Generating Dummy Password Hashes**:
+   * *Rejected*: Unnecessary hashing overhead, misleading account state, and potential security risk if the dummy generator has low entropy.
+2. **Separate Tables for Native vs. OAuth Users**:
+   * *Rejected*: Unnecessary duplication of profile, auditing, and role assignment logic.
+
+### Interview Questions
+1. *Why should password_hash be nullable when designing for OAuth?*
+2. *How do you prevent an OAuth user from logging in via standard username/password forms if password_hash is null?*
+
+### My Interview Answer
+"We made `password_hash` nullable in the `users` table to accommodate federated OAuth authentication cleanly. When a user logs in via Google or SSO, there is no local password to hash. Storing random dummy hashes is an anti-pattern that creates security ambiguities and complicates account recovery. A null hash cleanly designates that local password authentication is disabled for that account until explicitly configured by the user."
+
+---
+
 # 28. Interview Preparation Log
 
 For every significant feature, maintain:
@@ -1019,10 +1123,13 @@ For every significant feature, maintain:
 | ---------------- | ------------------------------------------------------ | ---------------------------- | ----------------------------- | --------------- |
 | PostgreSQL       | Relational integrity, ACID transactions, multi-tenancy | MongoDB                      | Scaling complexity            | ✅               |
 | Docker           | Reproducible local DB environment & volume persistence | Local bare-metal install, H2 | Docker Desktop overhead       | ✅               |
+| UUIDv7           | Monotonic B-tree locality + non-enumerable security    | Auto-increment, UUIDv4       | 16 bytes vs 8 bytes           | ✅               |
+| Multi-Tenancy    | Shared DB with tenant_id, compound uniqueness          | DB-per-tenant, schema-per-tenant | Isolation discipline       | ✅               |
+| Flyway           | DB migrations & schema versioning                      | Manual SQL                   | Migration discipline          | ✅               |
+| Partial Indexes  | Uniqueness enforcement on nullable subset columns      | Full unique index, triggers  | PostgreSQL-specific feature   | ✅               |
 | Redis            | Reduce repeated reads                                  | DB only                      | Cache invalidation            | ⬜               |
 | RabbitMQ         | Async processing                                       | Synchronous                  | Eventual consistency          | ⬜               |
 | JWT              | Stateless auth                                         | Sessions                     | Token revocation              | ⬜               |
-| Flyway           | DB migrations & schema versioning                      | Manual SQL                   | Migration discipline          | ✅               |
 | TanStack Query   | Server-state management                                | Redux                        | Learning curve                | ⬜               |
 | Modular Monolith | Avoid premature microservices                          | Microservices                | Shared deployment             | ⬜               |
 
