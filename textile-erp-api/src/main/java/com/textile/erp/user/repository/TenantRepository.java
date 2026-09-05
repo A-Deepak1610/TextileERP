@@ -1,6 +1,6 @@
-package com.textile.erp.tenant.repository;
+package com.textile.erp.user.repository;
 
-import com.textile.erp.tenant.entity.Tenant;
+import com.textile.erp.user.entity.Tenant;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;

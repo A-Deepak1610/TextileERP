@@ -1,4 +1,4 @@
-package com.textile.erp.tenant.entity;
+package com.textile.erp.user.entity;
 
 public enum TenantStatus {
     ACTIVE,

@@ -1,4 +1,4 @@
-package com.textile.erp.tenant.entity;
+package com.textile.erp.user.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,13 +19,13 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
 @Entity
-@Table(name = "tenants")
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Tenant {
+public class User {
 
     @Id
     @GeneratedValue
@@ -33,16 +33,32 @@ public class Tenant {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "name", nullable = false)
-    private String name;
+    /**
+     * Null for platform-level users (e.g. SUPER_ADMIN).
+     * Mandatory for tenant-scoped users (TENANT_ADMIN, EMPLOYEE).
+     */
+    @Column(name = "tenant_id")
+    private UUID tenantId;
 
-    @Column(name = "slug", nullable = false, unique = true, length = 100)
-    private String slug;
+    @Column(name = "email", nullable = false)
+    private String email;
+
+    /**
+     * Nullable for users authenticating exclusively via OAuth/SSO (e.g. Google OAuth).
+     */
+    @Column(name = "password_hash")
+    private String passwordHash;
+
+    @Column(name = "first_name", nullable = false, length = 100)
+    private String firstName;
+
+    @Column(name = "last_name", length = 100)
+    private String lastName;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 50)
     @Builder.Default
-    private TenantStatus status = TenantStatus.ACTIVE;
+    private UserStatus status = UserStatus.ACTIVE;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -51,4 +67,8 @@ public class Tenant {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    public boolean isPlatformUser() {
+        return this.tenantId == null;
+    }
 }
