@@ -39,7 +39,7 @@ public class TenantServiceImpl implements TenantService {
                 .status(TenantStatus.ACTIVE)
                 .build();
 
-        Tenant saved = tenantRepository.save(tenant);
+        Tenant saved = tenantRepository.saveAndFlush(tenant);
         return mapToResponseDto(saved);
     }
 

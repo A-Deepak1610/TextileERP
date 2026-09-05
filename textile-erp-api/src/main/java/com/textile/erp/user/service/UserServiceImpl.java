@@ -78,7 +78,7 @@ public class UserServiceImpl implements UserService {
                 .status(UserStatus.ACTIVE)
                 .build();
 
-        User savedUser = userRepository.save(user);
+        User savedUser = userRepository.saveAndFlush(user);
 
         UserRole userRole = UserRole.builder()
                 .id(new UserRoleId(savedUser.getId(), role.getId()))
@@ -86,7 +86,7 @@ public class UserServiceImpl implements UserService {
                 .role(role)
                 .build();
 
-        userRoleRepository.save(userRole);
+        userRoleRepository.saveAndFlush(userRole);
 
         return mapToResponseDto(savedUser, List.of(roleName));
     }
