@@ -928,31 +928,24 @@ Whenever an important decision is made, add:
 ## ADR: [Decision Name]
 
 ### Context
-
 What problem are we solving?
 
 ### Decision
-
 What did we choose?
 
 ### Why?
-
 Why did we choose it?
 
 ### Alternatives
-
 What else could we have used?
 
 ### Trade-offs
-
 What are the advantages and disadvantages?
 
 ### Consequences
-
 What does this decision affect?
 
 ### Interview Questions
-
 1. Why did you choose this?
 2. What alternatives did you consider?
 3. What are the disadvantages?
@@ -960,8 +953,61 @@ What does this decision affect?
 5. How does this scale?
 
 ### My Interview Answer
-
 Write a 30–60 second explanation in your own words.
+
+---
+
+## ADR-001: Local PostgreSQL Development via Docker Compose
+
+### Context
+During early development of TexForge, developers need a reliable, isolated, and consistent PostgreSQL database environment that mirrors production PostgreSQL characteristics without polluting developer host operating systems or causing "works on my machine" version divergence.
+
+### Decision
+Use Docker Compose to run a containerized PostgreSQL 16 instance (`postgres:16-alpine`) exposing `localhost:5432` with:
+* A dedicated application database: `texforge`
+* A dedicated non-root application user: `texforge_user`
+* Parameterized configuration via `.env` and `.env.example`
+* Named volume data persistence: `texforge-postgres-data`
+* Connection-level health check: `pg_isready -U texforge_user -d texforge`
+* Restart policy: `unless-stopped`
+
+At this stage, keep the Spring Boot backend and React frontend running natively on the host machine. Do not containerize application code, Redis, or RabbitMQ until those architectural layers are actively implemented.
+
+### Why?
+* **Environment Consistency**: Guarantees identical PostgreSQL version and extensions across Windows, macOS, and Linux developer environments.
+* **Rapid Onboarding**: A new engineer can clone the repo, run `docker compose up -d`, and immediately have a working database.
+* **Safe State Persistence**: Named Docker volume preserves database records across container restarts (`docker compose down` followed by `docker compose up -d`).
+* **Clean Isolation**: Can be completely wiped and re-created cleanly without uninstalling or altering host services.
+* **Developer Velocity**: Running Spring Boot and Vite natively avoids Docker rebuild latency and allows seamless IDE breakpoint debugging and Hot-Module-Replacement (HMR).
+
+### Alternatives Considered
+1. **Bare-metal Local PostgreSQL Installation**:
+   * *Rejected*: Causes version conflicts, machine-specific pathing, configuration drift, and difficult cleanup across different developer operating systems.
+2. **In-Memory Database (e.g., H2)**:
+   * *Rejected*: H2 does not support PostgreSQL dialect specifics, JSONB functions, composite index subtleties, or strict transaction/locking behavior needed for multi-tenant ERP operations.
+3. **Full Containerization (Dockerizing Backend, Frontend, and DB together)**:
+   * *Rejected for early development*: Slower developer feedback loop, requires rebuilding containers on code edits, complicates IDE step-debugging, and adds premature operational complexity before the core application code stabilizes.
+
+### Trade-offs
+* **Prerequisites**: Developers must have Docker Desktop installed and running.
+* **Resource Overhead**: Docker Desktop/WSL2 consumes a baseline amount of host RAM and CPU.
+* **Volume Hygiene**: Developers must be trained not to use `docker compose down -v` unless they explicitly intend to destroy their local test data.
+
+### Consequences
+* Database credentials and ports are standardized in `.env.example` and injected into Spring Boot via `application.properties` with fallback defaults.
+* Database schema changes are strictly governed by Flyway migrations; direct manual table alterations inside the container are prohibited.
+
+### Interview Questions
+1. *Why did you choose Docker Compose for local PostgreSQL rather than having developers install it natively?*
+2. *Why not containerize the Spring Boot application and React frontend at this stage as well?*
+3. *How do you ensure data is not lost when stopping containers? What is the difference between `docker compose down` and `docker compose down -v`?*
+4. *How does the Docker health check work, and why is `pg_isready` preferred over checking if the container process is running?*
+5. *Why is using a dedicated application database user preferred over the default `postgres` superuser?*
+
+### My Interview Answer
+"For TexForge, we adopted a hybrid local development approach: infrastructure dependencies like PostgreSQL run containerized via Docker Compose, while our Spring Boot application and React frontend run natively on the host. 
+
+This gives us the best of both worlds. By containerizing PostgreSQL with a specific Alpine image and named volume, we eliminate environment drift, prevent 'works on my machine' issues, and guarantee dialect parity without polluting the host OS. At the same time, keeping application code on the host preserves sub-second hot reload and seamless IDE debugging. We configured active health checking with `pg_isready` and parameterized all connection variables through `.env` following 12-factor app principles."
 
 ---
 
@@ -969,16 +1015,16 @@ Write a 30–60 second explanation in your own words.
 
 For every significant feature, maintain:
 
-| Topic            | Why Used                      | Alternative   | Trade-off            | Interview Ready |
-| ---------------- | ----------------------------- | ------------- | -------------------- | --------------- |
-| PostgreSQL       | Relational + transactions     | MongoDB       | Scaling complexity   | ⬜               |
-| Redis            | Reduce repeated reads         | DB only       | Cache invalidation   | ⬜               |
-| RabbitMQ         | Async processing              | Synchronous   | Eventual consistency | ⬜               |
-| JWT              | Stateless auth                | Sessions      | Token revocation     | ⬜               |
-| Flyway           | DB migrations                 | Manual SQL    | Migration discipline | ⬜               |
-| TanStack Query   | Server-state management       | Redux         | Learning curve       | ⬜               |
-| Modular Monolith | Avoid premature microservices | Microservices | Shared deployment    | ⬜               |
-| Docker           | Reproducible environment      | Local setup   | Container overhead   | ⬜               |
+| Topic            | Why Used                                               | Alternative                  | Trade-off                     | Interview Ready |
+| ---------------- | ------------------------------------------------------ | ---------------------------- | ----------------------------- | --------------- |
+| PostgreSQL       | Relational integrity, ACID transactions, multi-tenancy | MongoDB                      | Scaling complexity            | ✅               |
+| Docker           | Reproducible local DB environment & volume persistence | Local bare-metal install, H2 | Docker Desktop overhead       | ✅               |
+| Redis            | Reduce repeated reads                                  | DB only                      | Cache invalidation            | ⬜               |
+| RabbitMQ         | Async processing                                       | Synchronous                  | Eventual consistency          | ⬜               |
+| JWT              | Stateless auth                                         | Sessions                     | Token revocation              | ⬜               |
+| Flyway           | DB migrations & schema versioning                      | Manual SQL                   | Migration discipline          | ✅               |
+| TanStack Query   | Server-state management                                | Redux                        | Learning curve                | ⬜               |
+| Modular Monolith | Avoid premature microservices                          | Microservices                | Shared deployment             | ⬜               |
 
 Update this table as the project evolves.
 
