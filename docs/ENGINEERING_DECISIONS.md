@@ -1339,3 +1339,43 @@ TexForge is a multi-tenant SaaS ERP where requests must be strictly scoped to th
 3. **Accepting `tenantId` in Login Request**:
    * *Rejected*: Dangerous security vulnerability. Identity and tenant scoping must be resolved solely from authenticated database state and cryptographically signed JWT claims.
 
+---
+
+## ADR-006: User Module Multi-Tenant Isolation, Scoped Provisioning, and Role Authorization
+
+### Context
+In TexForge's multi-tenant SaaS architecture, user administration requires strict boundary enforcement:
+1. Platform administration (`SUPER_ADMIN`) operates with `tenant_id = null` across all tenants.
+2. Tenant administrators (`TENANT_ADMIN`) must manage employees and tenant admins strictly inside their own tenant and must never view, modify, or provision platform administrators or cross-tenant accounts.
+3. Standard employees (`EMPLOYEE`) must only view and manage their own identity (`/api/users/me`) and cannot access user administration or role assignment endpoints.
+4. Client requests must never be trusted to dictate tenant assignment; the tenant boundary must be resolved dynamically from the authenticated `CurrentUser`.
+
+### Decision
+1. **Separation of Tenant Identity Resolution**:
+   * Rather than accepting `tenantId` from client input in tenant operations, the backend derives tenant context from `SecurityUtils.getCurrentUser().getTenantId()`.
+   * When a `TENANT_ADMIN` creates a user, any client-supplied `tenantId` is overridden by the administrator's `tenantId` (`UserSecurityValidator.resolveEffectiveTenantIdForCreation`).
+   * When a `SUPER_ADMIN` creates a tenant-scoped user, they must provide the explicit `tenantId`, which is validated against the `tenants` table.
+   * Only `SUPER_ADMIN` is permitted to create users with `tenant_id = null` and role `SUPER_ADMIN`.
+2. **Dynamic Authorization Validator (`UserSecurityValidator`)**:
+   * Centralized access rules decouple controllers and query methods from ad-hoc `if` checks:
+     - `validateCanAccessUser(targetUser)`: Rejects cross-tenant access and blocks tenant admins from viewing platform users.
+     - `validateCanModifyUser(targetUser)`: Enforces modification rights.
+     - `validateCanManageRoles(targetUser, roleToManage)`: Prevents privilege escalation (e.g., tenant admins attempting to grant `SUPER_ADMIN`).
+     - `validateCanListUsers()`: Blocks `EMPLOYEE` from querying user directories.
+3. **Defensive Invariants**:
+   * Self-Deactivation Prevention: Users cannot deactivate their own accounts to prevent administrative lockout.
+   * Last-Role Safeguard: A user's last remaining role cannot be deleted (`UserRoleRepository.countByIdUserId(userId) > 1`).
+   * Password Hashing on Provisioning: Passwords provided in `CreateUserRequest` are immediately hashed using BCrypt prior to persistence.
+4. **Dedicated REST DTOs**:
+   * Clear separation between request DTOs (`CreateUserRequest`, `UpdateUserRequest`, `UpdateUserStatusRequest`, `AssignRoleRequest`) and response models (`UserResponse`, `UserSummaryResponse`).
+   * Passwords and internal hashes are never exposed in any response model.
+
+### Trade-offs & Alternatives Considered
+1. **Database Row-Level Security (Postgres RLS)**:
+   * *Considered*: Strong isolation at the DB engine level.
+   * *Decision for V1*: Application-layer enforcement via `UserSecurityValidator` and repository queries allows precise business error messages (403 Forbidden vs 404 Not Found), fine-grained role escalation prevention, and easier testing without requiring dynamic connection pool tenant role switching. RLS can be layered in future milestones.
+2. **Spring Security Method Security (`@PreAuthorize`)**:
+   * *Considered*: Using SpEL expressions like `@PreAuthorize("@userSecurityValidator.canAccess(#id)")`.
+   * *Decision*: Programmatic validation in `UserServiceImpl` via `UserSecurityValidator` provides atomic business transactions, clearer stack traces, and precise exception mapping via `UserExceptionHandler`.
+
+

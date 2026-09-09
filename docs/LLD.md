@@ -18,25 +18,51 @@ com.textile.erp.user
 │   ├── UserRole.java        # Composite junction entity
 │   └── UserRoleId.java      # Embeddable composite key (userId, roleId)
 │
+├── controller
+│   ├── UserController.java       # User REST API endpoints
+│   └── UserExceptionHandler.java # User module 400/403/404/409 error advice
+│
 ├── repository
-│   ├── TenantRepository.java    # Tenant CRUD and slug operations
-│   ├── UserRepository.java      # Tenant/Platform scoped email lookups
-│   ├── RoleRepository.java      # Role lookup by RoleName
-│   └── UserRoleRepository.java  # Junction queries with JOIN FETCH
+│   ├── TenantRepository.java     # Tenant CRUD and slug operations
+│   ├── UserRepository.java       # Tenant/Platform scoped queries & search
+│   ├── RoleRepository.java       # Role lookup by RoleName
+│   └── UserRoleRepository.java   # Junction queries with JOIN FETCH & role deletion
+│
+├── security
+│   └── UserSecurityValidator.java # Tenant isolation & role authorization validator
+│
+├── mapper
+│   └── UserMapper.java           # Entity to UserResponse / UserSummaryResponse
 │
 ├── dto
-│   ├── TenantRequestDto.java    # Tenant creation payload
-│   ├── TenantResponseDto.java   # Safe tenant output
-│   ├── UserCreateRequestDto.java # User creation payload
-│   ├── UserResponseDto.java     # Safe user output with role enum names
-│   └── RoleResponseDto.java     # Role metadata output
+│   ├── CreateUserRequest.java    # User creation payload
+│   ├── UpdateUserRequest.java    # Profile update payload (firstName, lastName)
+│   ├── UpdateUserStatusRequest.java # Status change payload (status enum)
+│   ├── AssignRoleRequest.java    # Role assignment payload
+│   ├── UserResponse.java         # Safe user response with roles
+│   └── UserSummaryResponse.java  # Lightweight paginated summary response
 │
 └── service
-    ├── TenantService.java       # Tenant service contract
-    ├── TenantServiceImpl.java   # Tenant business logic & validation
-    ├── UserService.java         # User service contract
-    └── UserServiceImpl.java     # Platform/Tenant hierarchy enforcement
+    ├── TenantService.java        # Tenant service contract
+    ├── TenantServiceImpl.java    # Tenant business logic & validation
+    ├── UserService.java          # User service contract
+    └── UserServiceImpl.java      # Platform/Tenant hierarchy enforcement
 ```
+
+---
+
+## 1.1 REST API Specification
+
+| Method | Path | Auth / Role | Description |
+|---|---|---|---|
+| `POST` | `/api/users` | `SUPER_ADMIN`, `TENANT_ADMIN` | Admin provisions user. `TENANT_ADMIN` is locked to own tenant. |
+| `GET` | `/api/users/me` | Authenticated | Returns currently authenticated user profile & roles. |
+| `GET` | `/api/users/{id}` | Role Scoped | Get user by ID. SuperAdmin (all), TenantAdmin (own tenant), Employee (self only). |
+| `GET` | `/api/users` | `SUPER_ADMIN`, `TENANT_ADMIN` | List/search users with pagination, status, and role filters. |
+| `PATCH` | `/api/users/{id}` | Role Scoped | Update user profile (first name, last name). |
+| `PATCH` | `/api/users/{id}/status` | `SUPER_ADMIN`, `TENANT_ADMIN` | Activate/deactivate user (`ACTIVE`, `INACTIVE`, `SUSPENDED`). |
+| `POST` | `/api/users/{id}/roles` | `SUPER_ADMIN`, `TENANT_ADMIN` | Assign role (TenantAdmin cannot assign `SUPER_ADMIN`). |
+| `DELETE` | `/api/users/{id}/roles/{roleId}` | `SUPER_ADMIN`, `TENANT_ADMIN` | Remove role (cannot remove last role). |
 
 ---
 
