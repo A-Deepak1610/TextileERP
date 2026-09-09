@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,7 @@ public class UserServiceImpl implements UserService {
     private final TenantRepository tenantRepository;
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -69,10 +71,14 @@ public class UserServiceImpl implements UserService {
         Role role = roleRepository.findByName(roleName)
                 .orElseThrow(() -> new NoSuchElementException("Role not found with name: " + roleName));
 
+        String passwordHash = (request.getPassword() != null && !request.getPassword().isBlank())
+                ? passwordEncoder.encode(request.getPassword())
+                : null;
+
         User user = User.builder()
                 .tenantId(request.getTenantId())
                 .email(normalizedEmail)
-                .passwordHash(request.getPassword()) // plain hash or null for OAuth
+                .passwordHash(passwordHash)
                 .firstName(request.getFirstName().trim())
                 .lastName(request.getLastName() != null ? request.getLastName().trim() : null)
                 .status(UserStatus.ACTIVE)
