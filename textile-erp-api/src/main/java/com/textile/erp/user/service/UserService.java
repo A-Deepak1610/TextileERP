@@ -6,6 +6,8 @@ import com.textile.erp.user.entity.RoleName;
 import java.util.List;
 import java.util.UUID;
 
+import com.textile.erp.user.dto.UserResponse;
+
 public interface UserService {
 
     UserResponseDto createUser(UserCreateRequestDto request);
@@ -17,4 +19,6 @@ public interface UserService {
     List<UserResponseDto> getPlatformUsers();
 
     void assignRoleToUser(UUID userId, RoleName roleName);
+
+    UserResponse getCurrentUserProfile();
 }

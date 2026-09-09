@@ -12,6 +12,7 @@ import com.textile.erp.user.repository.RoleRepository;
 import com.textile.erp.user.repository.TenantRepository;
 import com.textile.erp.user.repository.UserRepository;
 import com.textile.erp.user.repository.UserRoleRepository;
+import com.textile.erp.user.security.UserSecurityValidator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -30,6 +31,8 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserSecurityValidator userSecurityValidator;
+    private final com.textile.erp.user.mapper.UserMapper userMapper;
 
     @Override
     @Transactional
@@ -159,6 +162,19 @@ public class UserServiceImpl implements UserService {
                     .build();
             userRoleRepository.save(userRole);
         }
+    }
+
+    @Override
+    public com.textile.erp.user.dto.UserResponse getCurrentUserProfile() {
+        com.textile.erp.auth.security.CurrentUser currentUser = userSecurityValidator.getAuthenticatedUser();
+        User user = userRepository.findById(currentUser.getUserId())
+                .orElseThrow(() -> new NoSuchElementException("Authenticated user not found with ID: " + currentUser.getUserId()));
+
+        List<RoleName> roles = userRoleRepository.findByUserIdWithRole(user.getId()).stream()
+                .map(ur -> ur.getRole().getName())
+                .toList();
+
+        return userMapper.toResponse(user, roles);
     }
 
     private UserResponseDto mapToResponseDto(User user, List<RoleName> roles) {
