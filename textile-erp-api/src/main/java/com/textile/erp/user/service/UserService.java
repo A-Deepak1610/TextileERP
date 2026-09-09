@@ -36,4 +36,8 @@ public interface UserService {
     UserResponse updateUserProfile(UUID userId, com.textile.erp.user.dto.UpdateUserRequest request);
 
     UserResponse updateUserStatus(UUID userId, com.textile.erp.user.dto.UpdateUserStatusRequest request);
+
+    UserResponse assignRole(UUID userId, com.textile.erp.user.dto.AssignRoleRequest request);
+
+    UserResponse removeRole(UUID userId, Long roleId);
 }

@@ -338,6 +338,83 @@ public class UserServiceImpl implements UserService {
         return userMapper.toResponse(updatedUser, roles);
     }
 
+    @Override
+    @Transactional
+    public UserResponse assignRole(UUID userId, com.textile.erp.user.dto.AssignRoleRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("AssignRoleRequest cannot be null");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found with ID: " + userId));
+
+        Role role;
+        if (request.getRoleId() != null) {
+            role = roleRepository.findById(request.getRoleId())
+                    .orElseThrow(() -> new NoSuchElementException("Role not found with ID: " + request.getRoleId()));
+        } else if (request.getRoleName() != null) {
+            role = roleRepository.findByName(request.getRoleName())
+                    .orElseThrow(() -> new NoSuchElementException("Role not found with name: " + request.getRoleName()));
+        } else {
+            throw new IllegalArgumentException("Either roleId or roleName must be provided");
+        }
+
+        userSecurityValidator.validateCanManageRoles(user, role.getName());
+
+        if (role.getName() == RoleName.SUPER_ADMIN && user.getTenantId() != null) {
+            throw new IllegalArgumentException("Cannot assign SUPER_ADMIN role to a tenant-scoped user");
+        }
+        if ((role.getName() == RoleName.TENANT_ADMIN || role.getName() == RoleName.EMPLOYEE) && user.isPlatformUser()) {
+            throw new IllegalArgumentException("Cannot assign tenant-scoped role (" + role.getName() + ") to a platform user");
+        }
+
+        UserRoleId id = new UserRoleId(userId, role.getId());
+        if (!userRoleRepository.existsById(id)) {
+            UserRole userRole = UserRole.builder()
+                    .id(id)
+                    .user(user)
+                    .role(role)
+                    .build();
+            userRoleRepository.saveAndFlush(userRole);
+        }
+
+        List<RoleName> roles = userRoleRepository.findByUserIdWithRole(userId).stream()
+                .map(ur -> ur.getRole().getName())
+                .toList();
+
+        return userMapper.toResponse(user, roles);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse removeRole(UUID userId, Long roleId) {
+        if (roleId == null) {
+            throw new IllegalArgumentException("RoleId cannot be null");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found with ID: " + userId));
+
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new NoSuchElementException("Role not found with ID: " + roleId));
+
+        userSecurityValidator.validateCanManageRoles(user, role.getName());
+
+        long roleCount = userRoleRepository.countByIdUserId(userId);
+        if (roleCount <= 1) {
+            throw new IllegalStateException("Cannot remove the last remaining role from a user");
+        }
+
+        userRoleRepository.deleteByUserIdAndRoleId(userId, roleId);
+        userRoleRepository.flush();
+
+        List<RoleName> roles = userRoleRepository.findByUserIdWithRole(userId).stream()
+                .map(ur -> ur.getRole().getName())
+                .toList();
+
+        return userMapper.toResponse(user, roles);
+    }
+
     private UserResponseDto mapToResponseDto(User user, List<RoleName> roles) {
         return UserResponseDto.builder()
                 .id(user.getId())
