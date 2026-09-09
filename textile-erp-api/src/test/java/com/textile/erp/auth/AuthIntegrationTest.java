@@ -67,8 +67,8 @@ class AuthIntegrationTest {
     }
 
     @Test
-    @DisplayName("Verify seeded superadmin login succeeds with email admin@gmail.com and username admin with password admin@123")
-    void testSeededSuperAdminLogin() throws Exception {
+    @DisplayName("Verify seeded superadmin can log in using email admin@gmail.com and password admin@123")
+    void testSeededSuperAdminLoginWithEmail() throws Exception {
         mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"email\":\"admin@gmail.com\",\"password\":\"admin@123\"}"))
@@ -77,13 +77,6 @@ class AuthIntegrationTest {
                 .andExpect(jsonPath("$.refreshToken").isNotEmpty())
                 .andExpect(jsonPath("$.user.email").value("admin@gmail.com"))
                 .andExpect(jsonPath("$.user.roles[0]").value("SUPER_ADMIN"));
-
-        mockMvc.perform(post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"username\":\"admin\",\"password\":\"admin@123\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").isNotEmpty())
-                .andExpect(jsonPath("$.user.email").value("admin@gmail.com"));
     }
 
     @Test

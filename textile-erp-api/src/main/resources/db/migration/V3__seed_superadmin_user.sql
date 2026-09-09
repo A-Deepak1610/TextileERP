@@ -1,6 +1,6 @@
 -- ==============================================================================
 -- Migration: V3__seed_superadmin_user.sql
--- Description: Seed default SuperAdmin credentials (email: admin@gmail.com, password: admin@123)
+-- Description: Seed initial default SuperAdmin user in database
 -- ==============================================================================
 
 INSERT INTO users (
@@ -18,8 +18,8 @@ INSERT INTO users (
     NULL,
     'admin@gmail.com',
     '$2a$10$ditLalwB.fQZseOW2T9KEuIl4S8FF7ZnpcheLclu/HsIQgFuo8WKe',
-    'Platform',
-    'SuperAdmin',
+    'Super',
+    'Admin',
     'ACTIVE',
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
