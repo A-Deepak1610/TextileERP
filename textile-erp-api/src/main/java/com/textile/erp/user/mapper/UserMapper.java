@@ -44,4 +44,8 @@ public class UserMapper {
                 .roles(roles != null ? roles : Collections.emptyList())
                 .build();
     }
+
+    public UserSummaryResponse toSummaryResponse(User user, List<RoleName> roles) {
+        return toSummary(user, roles);
+    }
 }

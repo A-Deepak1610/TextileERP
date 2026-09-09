@@ -18,6 +18,7 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import com.textile.erp.auth.security.CurrentUser;
+import com.textile.erp.user.dto.UserResponse;
 import com.textile.erp.user.dto.UserSummaryResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
