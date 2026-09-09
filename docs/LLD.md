@@ -154,3 +154,57 @@ JPA entities are strictly internal to the persistence and domain layers:
 * **No Direct Entity Exposure**: Controllers and API contracts exchange exclusively `*RequestDto` and `*ResponseDto`.
 * **Zero Lazy-Loading Leaks**: `UserResponseDto` embeds only detached values (`List<RoleName>`), preventing `LazyInitializationException` outside transactional contexts.
 * **Sensitive Field Protection**: `password_hash` is never exposed in response DTOs.
+
+---
+
+## 5. Auth Module (`com.textile.erp.auth`)
+
+### Package Layout
+```text
+com.textile.erp.auth
+├── controller
+│   ├── AuthController.java         # POST /api/auth/login, /refresh, /logout
+│   └── AuthExceptionHandler.java   # Centralized HTTP 401/403/400 exception mapping
+├── dto
+│   ├── LoginRequestDto.java        # Email + password credentials
+│   ├── LoginResponseDto.java       # Access token + refresh token + UserAuthDto
+│   ├── RefreshTokenRequestDto.java # Raw refresh token payload
+│   ├── RefreshTokenResponseDto.java# Rotated tokens response
+│   ├── LogoutRequestDto.java       # Revocation target token
+│   ├── LogoutResponseDto.java      # Simple acknowledgment message
+│   └── UserAuthDto.java            # Safe authenticated user details
+├── entity
+│   └── RefreshToken.java           # DB-persisted hashed refresh token
+├── repository
+│   └── RefreshTokenRepository.java # Token hash lookups & user revocations
+├── security
+│   ├── CurrentUser.java            # Immutable authenticated security principal
+│   ├── JwtAuthenticationFilter.java# Bearer token verification filter
+│   └── SecurityUtils.java          # ThreadLocal SecurityContext accessor
+├── service
+│   ├── AuthService.java            # Authentication service contract
+│   ├── AuthServiceImpl.java        # Login, refresh rotation, and logout logic
+│   ├── JwtService.java             # HMAC-SHA256 JWT generation and parsing
+│   └── RefreshTokenService.java    # Cryptographic generation & SHA-256 hashing
+└── util
+    └── TokenHashUtil.java          # Deterministic SHA-256 token hashing
+```
+
+### JWT Claims Specification
+```text
+{
+  "sub": "018e3d64-8ab1-71b3-a18c-c60395bcf94a",       // User UUID
+  "tenant_id": "018e3d64-77f2-70b1-91a0-d123456789ab", // Tenant UUID (null for SUPER_ADMIN)
+  "roles": ["TENANT_ADMIN"],                            // List of assigned RoleName strings
+  "email": "admin@tenant.com",
+  "iat": 1788975000,
+  "exp": 1788975900                                     // 15-minute default expiration
+}
+```
+
+### Refresh Token Security & Rotation Strategy
+1. **Zero Plaintext Storage**: Raw tokens are generated using cryptographically strong `SecureRandom` (32 bytes, URL-safe Base64), but only their SHA-256 hash (`token_hash`) is stored in `refresh_tokens`.
+2. **Deterministic Lookup**: `TokenHashUtil.hashToken(raw)` enables efficient $O(1)$ indexed lookup while protecting tokens against database dump leakage.
+3. **Single-Use Token Rotation**: Every call to `POST /api/auth/refresh` immediately revokes the submitted refresh token and issues a brand-new token pair.
+4. **Logout Revocation**: Calling `POST /api/auth/logout` sets `revoked = true` and `revoked_at = CURRENT_TIMESTAMP`, preventing any future session reuse.
+

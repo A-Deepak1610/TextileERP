@@ -1303,3 +1303,39 @@ Document decision
 The goal of TexForge is not to demonstrate that we know many technologies.
 
 The goal is to demonstrate that we can make **good engineering decisions**.
+
+---
+
+## ADR-005: Auth V1 — JWT, Multi-Tenant Claim Propagation, and Hashed Refresh Token Rotation
+
+### Context
+TexForge is a multi-tenant SaaS ERP where requests must be strictly scoped to the authenticated organization while supporting platform-level administration (`SUPER_ADMIN`). To achieve high-throughput API communication without hitting the database on every micro-request, we require stateless JWT access tokens accompanied by secure, revocable refresh tokens for session management.
+
+### Decision
+1. **Modular Auth Isolation**:
+   * Encapsulate authentication concerns within a dedicated package: `com.textile.erp.auth`.
+   * The User module (`com.textile.erp.user`) retains user entities, lifecycle, and organizational persistence; the Auth module owns credentials verification, token generation, refresh tokens, and security filters.
+2. **Password Security**:
+   * Standardize on BCrypt via Spring Security's `PasswordEncoder`. Plaintext passwords are strictly forbidden.
+3. **Stateless JWT Claims & Multi-Tenancy**:
+   * Access tokens are signed using HMAC-SHA256 (`jjwt-api` 0.12.x) with short expiration (15 minutes).
+   * JWT standard & custom claims:
+     - `sub`: User UUID (`id`)
+     - `tenant_id`: Tenant UUID (or `null` strictly for `SUPER_ADMIN`)
+     - `roles`: Assigned roles (`["SUPER_ADMIN"]`, `["TENANT_ADMIN"]`, etc.)
+     - `email`: Authenticated email
+   * In-memory principal abstraction: `CurrentUser` record injected into Spring's `SecurityContext`. Downstream services read `tenantId` from `CurrentUser`, never from unverified request parameters.
+4. **Database-Persisted Hashed Refresh Tokens**:
+   * Refresh tokens are 32-byte cryptographically secure random tokens (`SecureRandom`, URL-safe Base64).
+   * **Zero Plaintext Storage**: Only the deterministic SHA-256 hash (`TokenHashUtil.hashToken(raw)`) is stored in `refresh_tokens.token_hash`. If the database is compromised, active session refresh tokens cannot be forged.
+   * **Single-Use Rotation**: Calling `POST /api/auth/refresh` immediately revokes the used refresh token and returns a fresh token pair.
+   * **Logout by Revocation**: `POST /api/auth/logout` revokes the refresh token (`revoked = true`, `revoked_at = NOW()`), immediately preventing further session extensions.
+
+### Trade-offs & Alternatives Considered
+1. **Stateful Server-Side Sessions (Redis / DB)**:
+   * *Rejected*: Requires persistent session store lookups on every single HTTP request, adding network hops and latency to ERP transactions.
+2. **Plaintext Refresh Tokens in Database**:
+   * *Rejected*: A database breach would grant attackers persistent access to user accounts. Hashing with SHA-256 provides $O(1)$ indexed lookup while keeping token values secret.
+3. **Accepting `tenantId` in Login Request**:
+   * *Rejected*: Dangerous security vulnerability. Identity and tenant scoping must be resolved solely from authenticated database state and cryptographically signed JWT claims.
+

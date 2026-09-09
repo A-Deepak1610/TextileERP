@@ -28,3 +28,23 @@
   * Implemented domain services (`TenantServiceImpl`, `UserServiceImpl`) with strict DTO boundaries (`TenantRequestDto`, `TenantResponseDto`, `UserCreateRequestDto`, `UserResponseDto`, `RoleResponseDto`).
   * Created comprehensive test suite `UserManagementIntegrationTest` verifying Flyway migrations, role seeding, hierarchy validation, cross-tenant email reuse, duplicate tenant email rejection, and database partial index enforcement.
   * Authored `docs/DATABASE_DESIGN.md`, `docs/LLD.md`, and updated `docs/ENGINEERING_DECISIONS.md` with ADR-002, ADR-003, and ADR-004.
+
+---
+
+## Milestone 3: Auth V1 & Multi-Tenant Security Architecture
+* **Date**: 2026-09-09
+* **Branch**: `feature/auth-v1`
+* **Changes**:
+  * Established separate `com.textile.erp.auth` module adhering to SOLID principles.
+  * Created Flyway migration `V2__init_refresh_tokens.sql` with table `refresh_tokens`, indexing `user_id`, `token_hash`, and `expires_at`.
+  * Implemented BCrypt password hashing via Spring Security `PasswordEncoder`, updating `UserServiceImpl` to enforce zero plaintext password persistence.
+  * Implemented `JwtService` using JJWT 0.12 with HMAC-SHA256, signing tokens with claims: `sub` (userId), `tenant_id` (null for SUPER_ADMIN), `roles`, `email`.
+  * Implemented immutable `CurrentUser` security principal abstraction and `SecurityUtils` helper.
+  * Implemented `JwtAuthenticationFilter` (`OncePerRequestFilter`) populating Spring `SecurityContext` with `CurrentUser` and granted authorities.
+  * Implemented `RefreshTokenService` featuring cryptographically secure random token generation, deterministic SHA-256 hashing (`TokenHashUtil`), single-use token rotation, and revocation on logout.
+  * Built `AuthController` exposing `POST /api/auth/login`, `POST /api/auth/refresh`, and `POST /api/auth/logout`.
+  * Built `AuthExceptionHandler` mapping `BadCredentialsException` (401), `DisabledException` (403), and `IllegalArgumentException` (400) to standard JSON error responses.
+  * Configured `SecurityConfig` with stateless session management, permitting public auth routes and health endpoints while securing all other endpoints.
+  * Built `AuthIntegrationTest` verifying successful SuperAdmin/TenantAdmin login, invalid credentials rejection, inactive user rejection, refresh token rotation, revocation, logout, and protected endpoint access.
+  * Authored ADR-005 in `docs/ENGINEERING_DECISIONS.md` and updated `docs/LLD.md`.
+
