@@ -17,6 +17,10 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import com.textile.erp.auth.security.CurrentUser;
+import com.textile.erp.user.dto.UserSummaryResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -189,6 +193,26 @@ public class UserServiceImpl implements UserService {
                 .toList();
 
         return userMapper.toResponse(user, roles);
+    }
+
+    @Override
+    public Page<UserSummaryResponse> listUsers(String search, RoleName role, UserStatus status, Pageable pageable) {
+        userSecurityValidator.validateCanListUsers();
+        CurrentUser currentUser = userSecurityValidator.getAuthenticatedUser();
+
+        Page<User> usersPage;
+        if (currentUser.isSuperAdmin()) {
+            usersPage = userRepository.searchUsers(null, status, role, search, pageable);
+        } else {
+            usersPage = userRepository.searchUsersForTenant(currentUser.getTenantId(), status, role, search, pageable);
+        }
+
+        return usersPage.map(user -> {
+            List<RoleName> roles = userRoleRepository.findByUserIdWithRole(user.getId()).stream()
+                    .map(ur -> ur.getRole().getName())
+                    .toList();
+            return userMapper.toSummaryResponse(user, roles);
+        });
     }
 
     private UserResponseDto mapToResponseDto(User user, List<RoleName> roles) {

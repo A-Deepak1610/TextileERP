@@ -8,6 +8,11 @@ import java.util.UUID;
 
 import com.textile.erp.user.dto.UserResponse;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import com.textile.erp.user.dto.UserSummaryResponse;
+import com.textile.erp.user.entity.UserStatus;
+
 public interface UserService {
 
     UserResponseDto createUser(UserCreateRequestDto request);
@@ -23,4 +28,6 @@ public interface UserService {
     UserResponse getCurrentUserProfile();
 
     UserResponse getUserByIdSecured(UUID userId);
+
+    Page<UserSummaryResponse> listUsers(String search, RoleName role, UserStatus status, Pageable pageable);
 }

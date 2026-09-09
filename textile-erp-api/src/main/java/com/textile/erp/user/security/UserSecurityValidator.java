@@ -17,6 +17,14 @@ public class UserSecurityValidator {
                 .orElseThrow(() -> new AccessDeniedException("Full authentication is required to access this resource"));
     }
 
+    public void validateCanListUsers() {
+        CurrentUser currentUser = getAuthenticatedUser();
+        if (currentUser.isSuperAdmin() || currentUser.hasRole(RoleName.TENANT_ADMIN)) {
+            return;
+        }
+        throw new AccessDeniedException("Employees are not authorized to list users");
+    }
+
     public void validateCanAccessUser(User targetUser) {
         CurrentUser currentUser = getAuthenticatedUser();
 

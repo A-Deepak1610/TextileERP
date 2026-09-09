@@ -12,6 +12,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.textile.erp.user.entity.RoleName;
+
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
 
@@ -30,9 +32,12 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     List<User> findByTenantIdIsNull();
 
     @Query("""
-        SELECT u FROM User u
-        WHERE u.tenantId = :tenantId
+        SELECT DISTINCT u FROM User u
+        LEFT JOIN UserRole ur ON ur.user = u
+        LEFT JOIN ur.role r
+        WHERE (:tenantId IS NULL OR u.tenantId = :tenantId)
           AND (:status IS NULL OR u.status = :status)
+          AND (:role IS NULL OR r.name = :role)
           AND (
             :search IS NULL OR :search = '' OR
             LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) OR
@@ -40,17 +45,21 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             LOWER(u.lastName) LIKE LOWER(CONCAT('%', :search, '%'))
           )
     """)
-    Page<User> findByTenantIdWithFilters(
+    Page<User> searchUsers(
         @Param("tenantId") UUID tenantId,
         @Param("status") UserStatus status,
+        @Param("role") RoleName role,
         @Param("search") String search,
         Pageable pageable
     );
 
     @Query("""
-        SELECT u FROM User u
-        WHERE (:tenantId IS NULL OR u.tenantId = :tenantId)
+        SELECT DISTINCT u FROM User u
+        LEFT JOIN UserRole ur ON ur.user = u
+        LEFT JOIN ur.role r
+        WHERE u.tenantId = :tenantId
           AND (:status IS NULL OR u.status = :status)
+          AND (:role IS NULL OR r.name = :role)
           AND (
             :search IS NULL OR :search = '' OR
             LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) OR
@@ -58,9 +67,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             LOWER(u.lastName) LIKE LOWER(CONCAT('%', :search, '%'))
           )
     """)
-    Page<User> findAllWithFilters(
+    Page<User> searchUsersForTenant(
         @Param("tenantId") UUID tenantId,
         @Param("status") UserStatus status,
+        @Param("role") RoleName role,
         @Param("search") String search,
         Pageable pageable
     );
