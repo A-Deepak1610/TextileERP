@@ -53,6 +53,9 @@ public class AuthServiceImpl implements AuthService {
         }
 
         List<User> matchingUsers = userRepository.findByEmail(normalizedEmail);
+        if (matchingUsers.isEmpty() && "admin".equalsIgnoreCase(normalizedEmail)) {
+            matchingUsers = userRepository.findByEmail("admin@gmail.com");
+        }
         if (matchingUsers.isEmpty()) {
             throw new BadCredentialsException("Invalid email or password");
         }

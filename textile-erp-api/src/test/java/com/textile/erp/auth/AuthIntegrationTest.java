@@ -67,6 +67,26 @@ class AuthIntegrationTest {
     }
 
     @Test
+    @DisplayName("Verify seeded superadmin login succeeds with email admin@gmail.com and username admin with password admin@123")
+    void testSeededSuperAdminLogin() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"admin@gmail.com\",\"password\":\"admin@123\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
+                .andExpect(jsonPath("$.user.email").value("admin@gmail.com"))
+                .andExpect(jsonPath("$.user.roles[0]").value("SUPER_ADMIN"));
+
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"admin\",\"password\":\"admin@123\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.user.email").value("admin@gmail.com"));
+    }
+
+    @Test
     @DisplayName("Successful login for SUPER_ADMIN produces valid tokens with tenant_id = null")
     void testSuperAdminLoginAndJwtClaims() throws Exception {
         String email = "superadmin." + System.currentTimeMillis() + "@texforge.com";
