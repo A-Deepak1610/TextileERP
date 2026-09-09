@@ -215,6 +215,70 @@ public class UserServiceImpl implements UserService {
         });
     }
 
+    @Override
+    @Transactional
+    public UserResponse provisionUser(com.textile.erp.user.dto.CreateUserRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("CreateUserRequest cannot be null");
+        }
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            throw new IllegalArgumentException("User email cannot be blank");
+        }
+        if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+            throw new IllegalArgumentException("Password cannot be blank");
+        }
+        if (request.getFirstName() == null || request.getFirstName().trim().isEmpty()) {
+            throw new IllegalArgumentException("First name cannot be blank");
+        }
+        if (request.getRole() == null) {
+            throw new IllegalArgumentException("User role must be specified");
+        }
+
+        RoleName roleName = request.getRole();
+        UUID effectiveTenantId = userSecurityValidator.resolveEffectiveTenantIdForCreation(roleName, request.getTenantId());
+
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
+
+        if (effectiveTenantId == null) {
+            if (userRepository.existsByEmailAndTenantIdIsNull(normalizedEmail)) {
+                throw new IllegalArgumentException("Platform user with email '" + normalizedEmail + "' already exists");
+            }
+        } else {
+            if (!tenantRepository.existsById(effectiveTenantId)) {
+                throw new NoSuchElementException("Tenant not found with ID: " + effectiveTenantId);
+            }
+            if (userRepository.existsByTenantIdAndEmail(effectiveTenantId, normalizedEmail)) {
+                throw new IllegalArgumentException("User with email '" + normalizedEmail + "' already exists in this tenant");
+            }
+        }
+
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new NoSuchElementException("Role not found with name: " + roleName));
+
+        String passwordHash = passwordEncoder.encode(request.getPassword());
+
+        User user = User.builder()
+                .tenantId(effectiveTenantId)
+                .email(normalizedEmail)
+                .passwordHash(passwordHash)
+                .firstName(request.getFirstName().trim())
+                .lastName(request.getLastName() != null ? request.getLastName().trim() : null)
+                .status(UserStatus.ACTIVE)
+                .build();
+
+        User savedUser = userRepository.saveAndFlush(user);
+
+        UserRole userRole = UserRole.builder()
+                .id(new UserRoleId(savedUser.getId(), role.getId()))
+                .user(savedUser)
+                .role(role)
+                .build();
+
+        userRoleRepository.saveAndFlush(userRole);
+
+        return userMapper.toResponse(savedUser, List.of(roleName));
+    }
+
     private UserResponseDto mapToResponseDto(User user, List<RoleName> roles) {
         return UserResponseDto.builder()
                 .id(user.getId())

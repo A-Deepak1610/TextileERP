@@ -30,4 +30,6 @@ public interface UserService {
     UserResponse getUserByIdSecured(UUID userId);
 
     Page<UserSummaryResponse> listUsers(String search, RoleName role, UserStatus status, Pageable pageable);
+
+    UserResponse provisionUser(com.textile.erp.user.dto.CreateUserRequest request);
 }
