@@ -34,4 +34,6 @@ public interface UserService {
     UserResponse provisionUser(com.textile.erp.user.dto.CreateUserRequest request);
 
     UserResponse updateUserProfile(UUID userId, com.textile.erp.user.dto.UpdateUserRequest request);
+
+    UserResponse updateUserStatus(UUID userId, com.textile.erp.user.dto.UpdateUserStatusRequest request);
 }
