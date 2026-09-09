@@ -21,4 +21,6 @@ public interface UserService {
     void assignRoleToUser(UUID userId, RoleName roleName);
 
     UserResponse getCurrentUserProfile();
+
+    UserResponse getUserByIdSecured(UUID userId);
 }

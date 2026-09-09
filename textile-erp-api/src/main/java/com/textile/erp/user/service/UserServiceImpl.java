@@ -177,6 +177,20 @@ public class UserServiceImpl implements UserService {
         return userMapper.toResponse(user, roles);
     }
 
+    @Override
+    public UserResponse getUserByIdSecured(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found with ID: " + userId));
+
+        userSecurityValidator.validateCanAccessUser(user);
+
+        List<RoleName> roles = userRoleRepository.findByUserIdWithRole(userId).stream()
+                .map(ur -> ur.getRole().getName())
+                .toList();
+
+        return userMapper.toResponse(user, roles);
+    }
+
     private UserResponseDto mapToResponseDto(User user, List<RoleName> roles) {
         return UserResponseDto.builder()
                 .id(user.getId())
