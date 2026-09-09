@@ -32,4 +32,6 @@ public interface UserService {
     Page<UserSummaryResponse> listUsers(String search, RoleName role, UserStatus status, Pageable pageable);
 
     UserResponse provisionUser(com.textile.erp.user.dto.CreateUserRequest request);
+
+    UserResponse updateUserProfile(UUID userId, com.textile.erp.user.dto.UpdateUserRequest request);
 }

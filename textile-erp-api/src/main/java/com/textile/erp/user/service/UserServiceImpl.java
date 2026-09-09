@@ -279,6 +279,38 @@ public class UserServiceImpl implements UserService {
         return userMapper.toResponse(savedUser, List.of(roleName));
     }
 
+    @Override
+    @Transactional
+    public UserResponse updateUserProfile(UUID userId, com.textile.erp.user.dto.UpdateUserRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("UpdateUserRequest cannot be null");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found with ID: " + userId));
+
+        userSecurityValidator.validateCanModifyUser(user);
+
+        if (request.getFirstName() != null) {
+            if (request.getFirstName().trim().isEmpty()) {
+                throw new IllegalArgumentException("First name cannot be empty");
+            }
+            user.setFirstName(request.getFirstName().trim());
+        }
+
+        if (request.getLastName() != null) {
+            user.setLastName(request.getLastName().trim().isEmpty() ? null : request.getLastName().trim());
+        }
+
+        User updatedUser = userRepository.save(user);
+
+        List<RoleName> roles = userRoleRepository.findByUserIdWithRole(userId).stream()
+                .map(ur -> ur.getRole().getName())
+                .toList();
+
+        return userMapper.toResponse(updatedUser, roles);
+    }
+
     private UserResponseDto mapToResponseDto(User user, List<RoleName> roles) {
         return UserResponseDto.builder()
                 .id(user.getId())
