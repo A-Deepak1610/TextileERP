@@ -48,3 +48,35 @@
   * Built `AuthIntegrationTest` verifying successful SuperAdmin/TenantAdmin login, invalid credentials rejection, inactive user rejection, refresh token rotation, revocation, logout, and protected endpoint access.
   * Authored ADR-005 in `docs/ENGINEERING_DECISIONS.md` and updated `docs/LLD.md`.
 
+---
+
+## Milestone 4: User Module REST API, Multi-Tenant Boundary Enforcement & Role Management
+* **Date**: 2026-09-10
+* **Branch**: `feature/auth-v1`
+* **Changes**:
+  * Implemented end-to-end User Management module (`com.textile.erp.user`).
+  * Created DTO layer: `UserResponse`, `UserSummaryResponse`, `CreateUserRequest`, `UpdateUserRequest`, `UpdateUserStatusRequest`, `AssignRoleRequest`.
+  * Created `UserMapper` with clean entity-to-DTO conversion.
+  * Built `UserSecurityValidator` providing reusable multi-tenant boundary checks:
+    * Strict tenant isolation: Tenant Admins cannot inspect, modify, or provision outside their own tenant.
+    * Platform hierarchy: Tenant Admins cannot view, alter, or create `SUPER_ADMIN` accounts.
+    * Self-access only for `EMPLOYEE` role.
+  * Enhanced `UserRepository` with dynamic paginated search filtering by tenant, role, status, and search string.
+  * Implemented business service layer in `UserServiceImpl`:
+    * Admin-provisioned user creation with BCrypt password hashing.
+    * User profile updates (`PATCH /api/users/{id}`).
+    * User status activation/deactivation (`PATCH /api/users/{id}/status`), with self-deactivation prevention.
+    * Role assignment (`POST /api/users/{id}/roles`) and removal (`DELETE /api/users/{id}/roles/{roleId}`), with last-role removal safeguard.
+  * Built `UserController` with clean REST endpoints:
+    * `POST /api/users`
+    * `GET /api/users/me`
+    * `GET /api/users/{id}`
+    * `GET /api/users`
+    * `PATCH /api/users/{id}`
+    * `PATCH /api/users/{id}/status`
+    * `POST /api/users/{id}/roles`
+    * `DELETE /api/users/{id}/roles/{roleId}`
+  * Built `UserExceptionHandler` handling `AccessDeniedException` (403), `NoSuchElementException` (404), `IllegalArgumentException` (400), and `IllegalStateException` (409).
+  * Implemented comprehensive `UserModuleIntegrationTest` covering all 13 core scenarios with MockMvc, JWT tokens, and multi-tenant security verification. All 35 tests in project suite passing 100%.
+  * Authored ADR-006 in `docs/ENGINEERING_DECISIONS.md` and updated `docs/LLD.md`.
+
