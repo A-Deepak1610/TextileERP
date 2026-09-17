@@ -111,4 +111,33 @@ public class UserSecurityValidator {
 
         throw new AccessDeniedException("Employees are not authorized to modify user roles");
     }
+
+    public void validateCanManageTenants() {
+        CurrentUser currentUser = getAuthenticatedUser();
+        if (!currentUser.isSuperAdmin()) {
+            throw new AccessDeniedException("Only SUPER_ADMIN is authorized to perform platform tenant management");
+        }
+    }
+
+    public void validateCanAccessTenant(UUID tenantId) {
+        CurrentUser currentUser = getAuthenticatedUser();
+        if (currentUser.isSuperAdmin()) {
+            return;
+        }
+        if (currentUser.getTenantId() != null && Objects.equals(currentUser.getTenantId(), tenantId)) {
+            return;
+        }
+        throw new AccessDeniedException("Access forbidden: you do not have access to this tenant");
+    }
+
+    public void validateCanModifyTenant(UUID tenantId) {
+        CurrentUser currentUser = getAuthenticatedUser();
+        if (currentUser.isSuperAdmin()) {
+            return;
+        }
+        if (currentUser.hasRole(RoleName.TENANT_ADMIN) && Objects.equals(currentUser.getTenantId(), tenantId)) {
+            return;
+        }
+        throw new AccessDeniedException("Access forbidden: only SUPER_ADMIN or this tenant's administrator can modify tenant details");
+    }
 }

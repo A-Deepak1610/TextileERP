@@ -67,15 +67,15 @@ class AuthIntegrationTest {
     }
 
     @Test
-    @DisplayName("Verify seeded superadmin can log in using email superadmin@texforge.com and password SuperAdmin@2026!")
+    @DisplayName("Verify seeded superadmin can log in using email admin@texforge.com and password admin123")
     void testSeededSuperAdminLoginWithEmail() throws Exception {
         mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"superadmin@texforge.com\",\"password\":\"SuperAdmin@2026!\"}"))
+                .content("{\"email\":\"admin@texforge.com\",\"password\":\"admin123\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").isNotEmpty())
                 .andExpect(jsonPath("$.refreshToken").isNotEmpty())
-                .andExpect(jsonPath("$.user.email").value("superadmin@texforge.com"))
+                .andExpect(jsonPath("$.user.email").value("admin@texforge.com"))
                 .andExpect(jsonPath("$.user.roles[0]").value("SUPER_ADMIN"));
     }
 

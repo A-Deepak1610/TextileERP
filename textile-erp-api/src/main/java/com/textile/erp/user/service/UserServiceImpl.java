@@ -170,7 +170,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public com.textile.erp.user.dto.UserResponse getCurrentUserProfile() {
+    public UserResponse getCurrentUserProfile() {
         com.textile.erp.auth.security.CurrentUser currentUser = userSecurityValidator.getAuthenticatedUser();
         User user = userRepository.findById(currentUser.getUserId())
                 .orElseThrow(() -> new NoSuchElementException("Authenticated user not found with ID: " + currentUser.getUserId()));

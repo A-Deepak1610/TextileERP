@@ -14,10 +14,10 @@ INSERT INTO users (
     created_at,
     updated_at
 ) VALUES (
-    '018e0000-0000-7000-8000-000000000002',
+    '018e0000-0000-7000-8000-000000000003',
     NULL,
-    'superadmin@texforge.com',
-    '$2a$10$aFWTY4PYjsSCesVvMCqqZeZj4Nl8k3Mp/l6iiXUs2J0B6yTAnE76.',
+    'admin@texforge.com',
+    '$2a$10$HsnzBbp0Qn1f59gPQqCp3.DaKY0nLqUmDxSNCayoxl.LqFDvXCi9m',
     'Super',
     'Admin',
     'ACTIVE',
@@ -31,7 +31,7 @@ SET password_hash = EXCLUDED.password_hash,
 INSERT INTO user_roles (user_id, role_id, assigned_at)
 SELECT u.id, r.id, CURRENT_TIMESTAMP
 FROM users u, roles r
-WHERE u.email = 'superadmin@texforge.com'
+WHERE u.email = 'admin@texforge.com'
   AND u.tenant_id IS NULL
   AND r.name = 'SUPER_ADMIN'
 ON CONFLICT (user_id, role_id) DO NOTHING;
