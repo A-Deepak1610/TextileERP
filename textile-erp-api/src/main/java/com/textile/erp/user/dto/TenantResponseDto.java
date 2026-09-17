@@ -21,4 +21,6 @@ public class TenantResponseDto {
     private TenantStatus status;
     private Instant createdAt;
     private Instant updatedAt;
+    private UUID adminUserId;
+    private String adminEmail;
 }

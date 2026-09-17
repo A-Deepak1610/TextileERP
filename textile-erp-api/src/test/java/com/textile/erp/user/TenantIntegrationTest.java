@@ -156,6 +156,40 @@ class TenantIntegrationTest {
     }
 
     @Test
+    @DisplayName("SUPER_ADMIN creates tenant with admin credentials and new admin can log in")
+    void testSuperAdminCreatesTenantWithAdminCredentials() throws Exception {
+        long ts = System.currentTimeMillis();
+        String adminEmail = "owner." + ts + "@surattextiles.com";
+        TenantRequestDto request = TenantRequestDto.builder()
+                .name("Surat Textiles " + ts)
+                .slug("surat-textiles-" + ts)
+                .email(adminEmail)
+                .password("SuratPass123!")
+                .firstName("Suresh")
+                .lastName("Patel")
+                .build();
+
+        mockMvc.perform(post("/api/tenants")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + superAdminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNotEmpty())
+                .andExpect(jsonPath("$.name").value("Surat Textiles " + ts))
+                .andExpect(jsonPath("$.adminUserId").isNotEmpty())
+                .andExpect(jsonPath("$.adminEmail").value(adminEmail));
+
+        // Verify the newly created tenant admin can log in directly at /api/auth/login
+        String loginPayload = String.format("{\"email\":\"%s\",\"password\":\"SuratPass123!\"}", adminEmail);
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginPayload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.user.email").value(adminEmail));
+    }
+
+    @Test
     @DisplayName("TENANT_ADMIN cannot create a tenant (403 Forbidden)")
     void testTenantAdminCannotCreateTenant() throws Exception {
         TenantRequestDto request = TenantRequestDto.builder()

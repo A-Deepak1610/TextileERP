@@ -16,6 +16,17 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.textile.erp.user.entity.Role;
+import com.textile.erp.user.entity.RoleName;
+import com.textile.erp.user.entity.User;
+import com.textile.erp.user.entity.UserRole;
+import com.textile.erp.user.entity.UserRoleId;
+import com.textile.erp.user.entity.UserStatus;
+import com.textile.erp.user.repository.RoleRepository;
+import com.textile.erp.user.repository.UserRepository;
+import com.textile.erp.user.repository.UserRoleRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -23,6 +34,10 @@ public class TenantServiceImpl implements TenantService {
 
     private final TenantRepository tenantRepository;
     private final UserSecurityValidator userSecurityValidator;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final UserRoleRepository userRoleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -42,6 +57,15 @@ public class TenantServiceImpl implements TenantService {
             throw new IllegalArgumentException("Tenant with slug '" + normalizedSlug + "' already exists");
         }
 
+        String adminEmail = requestDto.getEffectiveEmail();
+        String adminPassword = requestDto.getEffectivePassword();
+
+        if (adminEmail != null) {
+            if (adminPassword == null || adminPassword.isBlank()) {
+                throw new IllegalArgumentException("Password cannot be blank when admin email is provided");
+            }
+        }
+
         Tenant tenant = Tenant.builder()
                 .name(requestDto.getName().trim())
                 .slug(normalizedSlug)
@@ -49,7 +73,37 @@ public class TenantServiceImpl implements TenantService {
                 .build();
 
         Tenant saved = tenantRepository.saveAndFlush(tenant);
-        return mapToResponseDto(saved);
+
+        UUID adminUserId = null;
+        if (adminEmail != null) {
+            if (userRepository.existsByTenantIdAndEmail(saved.getId(), adminEmail)) {
+                throw new IllegalArgumentException("User with email '" + adminEmail + "' already exists in this tenant");
+            }
+
+            Role tenantAdminRole = roleRepository.findByName(RoleName.TENANT_ADMIN)
+                    .orElseThrow(() -> new NoSuchElementException("Role not found: TENANT_ADMIN"));
+
+            User adminUser = User.builder()
+                    .tenantId(saved.getId())
+                    .email(adminEmail)
+                    .passwordHash(passwordEncoder.encode(adminPassword))
+                    .firstName(requestDto.getEffectiveFirstName())
+                    .lastName(requestDto.getEffectiveLastName())
+                    .status(UserStatus.ACTIVE)
+                    .build();
+
+            User savedAdmin = userRepository.saveAndFlush(adminUser);
+            adminUserId = savedAdmin.getId();
+
+            UserRole userRole = UserRole.builder()
+                    .id(new UserRoleId(savedAdmin.getId(), tenantAdminRole.getId()))
+                    .user(savedAdmin)
+                    .role(tenantAdminRole)
+                    .build();
+            userRoleRepository.saveAndFlush(userRole);
+        }
+
+        return mapToResponseDto(saved, adminUserId, adminEmail);
     }
 
     @Override
@@ -155,6 +209,10 @@ public class TenantServiceImpl implements TenantService {
     }
 
     private TenantResponseDto mapToResponseDto(Tenant tenant) {
+        return mapToResponseDto(tenant, null, null);
+    }
+
+    private TenantResponseDto mapToResponseDto(Tenant tenant, UUID adminUserId, String adminEmail) {
         return TenantResponseDto.builder()
                 .id(tenant.getId())
                 .name(tenant.getName())
@@ -162,6 +220,8 @@ public class TenantServiceImpl implements TenantService {
                 .status(tenant.getStatus())
                 .createdAt(tenant.getCreatedAt())
                 .updatedAt(tenant.getUpdatedAt())
+                .adminUserId(adminUserId)
+                .adminEmail(adminEmail)
                 .build();
     }
 }
