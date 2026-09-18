@@ -101,7 +101,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         UUID tenantId = resolveCurrentTenantId();
         CurrentUser currentUser = SecurityUtils.getCurrentUser().orElse(null);
-        UUID createdBy = (currentUser != null) ? currentUser.getId() : null;
+        UUID createdBy = (currentUser != null) ? currentUser.getUserId() : null;
 
         LocalDate invoiceDate = (request.getInvoiceDate() != null) ? request.getInvoiceDate() : LocalDate.now();
         String financialYear = invoiceNumberGenerator.calculateFinancialYear(invoiceDate);
