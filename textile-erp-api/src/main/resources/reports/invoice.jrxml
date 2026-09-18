@@ -1,0 +1,646 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="invoice"
+              pageWidth="595" pageHeight="842" columnWidth="555"
+              leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20"
+              uuid="a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11">
+
+    <!-- Report Parameters -->
+    <parameter name="invoiceNumber" class="java.lang.String"/>
+    <parameter name="invoiceDate" class="java.lang.String"/>
+    <parameter name="invoiceType" class="java.lang.String"/>
+    <parameter name="sellerName" class="java.lang.String"/>
+    <parameter name="sellerAddress" class="java.lang.String"/>
+    <parameter name="sellerGstin" class="java.lang.String"/>
+    <parameter name="sellerState" class="java.lang.String"/>
+    <parameter name="sellerPhone" class="java.lang.String"/>
+    <parameter name="sellerEmail" class="java.lang.String"/>
+
+    <parameter name="billingName" class="java.lang.String"/>
+    <parameter name="billingAddress" class="java.lang.String"/>
+    <parameter name="billingGstin" class="java.lang.String"/>
+    <parameter name="billingState" class="java.lang.String"/>
+
+    <parameter name="shippingName" class="java.lang.String"/>
+    <parameter name="shippingAddress" class="java.lang.String"/>
+    <parameter name="shippingGstin" class="java.lang.String"/>
+    <parameter name="shippingState" class="java.lang.String"/>
+
+    <parameter name="totalBales" class="java.lang.String"/>
+    <parameter name="baleDetails" class="java.lang.String"/>
+
+    <parameter name="bankAccountName" class="java.lang.String"/>
+    <parameter name="bankAccountNumber" class="java.lang.String"/>
+    <parameter name="bankName" class="java.lang.String"/>
+    <parameter name="ifsc" class="java.lang.String"/>
+    <parameter name="branch" class="java.lang.String"/>
+
+    <parameter name="taxableAmount" class="java.lang.String"/>
+    <parameter name="cgstRate" class="java.lang.String"/>
+    <parameter name="cgstAmount" class="java.lang.String"/>
+    <parameter name="sgstRate" class="java.lang.String"/>
+    <parameter name="sgstAmount" class="java.lang.String"/>
+    <parameter name="igstRate" class="java.lang.String"/>
+    <parameter name="igstAmount" class="java.lang.String"/>
+    <parameter name="roundOffAmount" class="java.lang.String"/>
+    <parameter name="grandTotal" class="java.lang.String"/>
+    <parameter name="amountInWords" class="java.lang.String"/>
+    <parameter name="termsAndConditions" class="java.lang.String"/>
+    <parameter name="authorizedSignatoryName" class="java.lang.String"/>
+
+    <!-- Fields from Collection Data Source -->
+    <field name="serialNumber" class="java.lang.Integer"/>
+    <field name="description" class="java.lang.String"/>
+    <field name="hsnCode" class="java.lang.String"/>
+    <field name="meters" class="java.lang.String"/>
+    <field name="foldingLessPercent" class="java.lang.String"/>
+    <field name="totalMeters" class="java.lang.String"/>
+    <field name="rate" class="java.lang.String"/>
+    <field name="taxableAmount" class="java.lang.String"/>
+
+    <title>
+        <band height="195" splitType="Stretch">
+            <!-- Outer Box Header -->
+            <rectangle>
+                <reportElement x="0" y="0" width="555" height="20" backcolor="#F0F0F0" uuid="0fa12345-1234-5678-9abc-def012345678"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#000000"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="150" y="2" width="255" height="16" uuid="1fa12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="10" isBold="true"/>
+                </textElement>
+                <text><![CDATA[TAX INVOICE]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="410" y="2" width="140" height="16" uuid="2fa12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="8" isBold="false"/>
+                </textElement>
+                <text><![CDATA[ORIGINAL FOR CONSIGNEE]]></text>
+            </staticText>
+
+            <!-- Seller Information Header Box -->
+            <rectangle>
+                <reportElement x="0" y="20" width="555" height="60" uuid="3fa12345-1234-5678-9abc-def012345678"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#000000"/>
+                </graphicElement>
+            </rectangle>
+            <textField textAdjust="StretchHeight">
+                <reportElement x="10" y="22" width="535" height="18" uuid="4fa12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="13" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{sellerName}]]></textFieldExpression>
+            </textField>
+            <textField textAdjust="StretchHeight">
+                <reportElement x="10" y="40" width="535" height="14" uuid="5fa12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{sellerAddress}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="10" y="55" width="260" height="12" uuid="6fa12345-1234-5678-9abc-def012345678"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["GSTIN: " + $P{sellerGstin}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="270" y="55" width="275" height="12" uuid="7fa12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Phone: " + $P{sellerPhone} + "  Email: " + $P{sellerEmail}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="10" y="67" width="260" height="11" uuid="8fa12345-1234-5678-9abc-def012345678"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA["STATE: " + $P{sellerState}]]></textFieldExpression>
+            </textField>
+
+            <!-- Invoice Number and Date Bar -->
+            <rectangle>
+                <reportElement x="0" y="80" width="277" height="20" uuid="9fa12345-1234-5678-9abc-def012345678"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#000000"/>
+                </graphicElement>
+            </rectangle>
+            <rectangle>
+                <reportElement x="277" y="80" width="278" height="20" uuid="afa12345-1234-5678-9abc-def012345678"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#000000"/>
+                </graphicElement>
+            </rectangle>
+            <textField>
+                <reportElement x="10" y="82" width="260" height="16" uuid="bfa12345-1234-5678-9abc-def012345678"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="9" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["INVOICE NO: " + $P{invoiceNumber}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="287" y="82" width="258" height="16" uuid="cfa12345-1234-5678-9abc-def012345678"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="9" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["INVOICE DATE: " + $P{invoiceDate}]]></textFieldExpression>
+            </textField>
+
+            <!-- Billed To and Shipped To Headers -->
+            <rectangle>
+                <reportElement x="0" y="100" width="277" height="16" backcolor="#F7F7F7" uuid="dfa12345-1234-5678-9abc-def012345678"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#000000"/>
+                </graphicElement>
+            </rectangle>
+            <rectangle>
+                <reportElement x="277" y="100" width="278" height="16" backcolor="#F7F7F7" uuid="efa12345-1234-5678-9abc-def012345678"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#000000"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="10" y="101" width="100" height="14" uuid="ffa12345-1234-5678-9abc-def012345678"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Billed To:]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="287" y="101" width="100" height="14" uuid="0ea12345-1234-5678-9abc-def012345678"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Shipped To:]]></text>
+            </staticText>
+
+            <!-- Billed To and Shipped To Details -->
+            <rectangle>
+                <reportElement x="0" y="116" width="277" height="78" uuid="1ea12345-1234-5678-9abc-def012345678"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#000000"/>
+                </graphicElement>
+            </rectangle>
+            <rectangle>
+                <reportElement x="277" y="116" width="278" height="78" uuid="2ea12345-1234-5678-9abc-def012345678"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#000000"/>
+                </graphicElement>
+            </rectangle>
+
+            <!-- Billed To Details -->
+            <textField textAdjust="StretchHeight">
+                <reportElement x="10" y="119" width="257" height="14" uuid="3ea12345-1234-5678-9abc-def012345678"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="9" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{billingName}]]></textFieldExpression>
+            </textField>
+            <textField textAdjust="StretchHeight">
+                <reportElement x="10" y="133" width="257" height="28" uuid="4ea12345-1234-5678-9abc-def012345678"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{billingAddress}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="10" y="163" width="257" height="14" uuid="5ea12345-1234-5678-9abc-def012345678"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["GSTIN: " + $P{billingGstin}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="10" y="177" width="257" height="14" uuid="6ea12345-1234-5678-9abc-def012345678"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["STATE: " + $P{billingState}]]></textFieldExpression>
+            </textField>
+
+            <!-- Shipped To Details -->
+            <textField textAdjust="StretchHeight">
+                <reportElement x="287" y="119" width="258" height="14" uuid="7ea12345-1234-5678-9abc-def012345678"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="9" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{shippingName}]]></textFieldExpression>
+            </textField>
+            <textField textAdjust="StretchHeight">
+                <reportElement x="287" y="133" width="258" height="28" uuid="8ea12345-1234-5678-9abc-def012345678"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{shippingAddress}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="287" y="163" width="258" height="14" uuid="9ea12345-1234-5678-9abc-def012345678"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["GSTIN: " + $P{shippingGstin}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="287" y="177" width="258" height="14" uuid="aea12345-1234-5678-9abc-def012345678"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["STATE: " + $P{shippingState}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+    <!-- Table Header -->
+    <columnHeader>
+        <band height="24">
+            <rectangle>
+                <reportElement x="0" y="0" width="555" height="24" backcolor="#E8E8E8" uuid="bea12345-1234-5678-9abc-def012345678"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#000000"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="0" y="0" width="25" height="24" uuid="cba12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="7" isBold="true"/>
+                </textElement>
+                <text><![CDATA[S.No]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="25" y="0" width="180" height="24" uuid="dba12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="7" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Description of Goods]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="205" y="0" width="50" height="24" uuid="eba12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="7" isBold="true"/>
+                </textElement>
+                <text><![CDATA[HSN]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="255" y="0" width="55" height="24" uuid="fba12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="7" isBold="true"/>
+                </textElement>
+                <text><![CDATA[METERS]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="310" y="0" width="55" height="24" uuid="0ca12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="7" isBold="true"/>
+                </textElement>
+                <text><![CDATA[FOLDING
+LESS %]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="365" y="0" width="55" height="24" uuid="1ca12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="7" isBold="true"/>
+                </textElement>
+                <text><![CDATA[TOTAL
+METER]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="420" y="0" width="55" height="24" uuid="2ca12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="7" isBold="true"/>
+                </textElement>
+                <text><![CDATA[RATE]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="475" y="0" width="80" height="24" uuid="3ca12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="7" isBold="true"/>
+                </textElement>
+                <text><![CDATA[AMOUNT]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+
+    <!-- Table Rows (Detail Band) -->
+    <detail>
+        <band height="20" splitType="Prevent">
+            <rectangle>
+                <reportElement positionType="Float" stretchType="RelativeToTallestObject" x="0" y="0" width="555" height="20" uuid="4ca12345-1234-5678-9abc-def012345678"/>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#000000"/>
+                </graphicElement>
+            </rectangle>
+            <textField>
+                <reportElement x="0" y="2" width="25" height="16" uuid="5ca12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{serialNumber}]]></textFieldExpression>
+            </textField>
+            <textField textAdjust="StretchHeight">
+                <reportElement x="28" y="2" width="174" height="16" uuid="6ca12345-1234-5678-9abc-def012345678"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{description}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="205" y="2" width="50" height="16" uuid="7ca12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{hsnCode}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="255" y="2" width="52" height="16" uuid="8ca12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{meters}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="310" y="2" width="52" height="16" uuid="9ca12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{foldingLessPercent}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="365" y="2" width="52" height="16" uuid="aca12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{totalMeters}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="420" y="2" width="52" height="16" uuid="bca12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{rate}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="475" y="2" width="75" height="16" uuid="cca12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{taxableAmount}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+    <!-- Summary (Totals, Bank Details, Terms, Signatory) -->
+    <summary>
+        <band height="250" splitType="Stretch">
+            <!-- Bales Summary -->
+            <rectangle>
+                <reportElement x="0" y="0" width="555" height="24" uuid="dca12345-1234-5678-9abc-def012345678"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#000000"/>
+                </graphicElement>
+            </rectangle>
+            <textField textAdjust="StretchHeight">
+                <reportElement x="10" y="4" width="300" height="16" uuid="eca12345-1234-5678-9abc-def012345678"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["BALE NO: " + ($P{baleDetails} != null && !$P{baleDetails}.isEmpty() ? $P{baleDetails} : "-")]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="320" y="4" width="225" height="16" uuid="fca12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["TOTAL BALES: " + ($P{totalBales} != null && !$P{totalBales}.isEmpty() ? $P{totalBales} : "-")]]></textFieldExpression>
+            </textField>
+
+            <!-- Bottom Left Box: Bank Details -->
+            <rectangle>
+                <reportElement x="0" y="24" width="320" height="96" uuid="0da12345-1234-5678-9abc-def012345678"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#000000"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="10" y="26" width="300" height="14" uuid="1da12345-1234-5678-9abc-def012345678"/>
+                <textElement>
+                    <font size="8" isBold="true" isUnderline="true"/>
+                </textElement>
+                <text><![CDATA[BANK DETAILS:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="10" y="42" width="300" height="12" uuid="2da12345-1234-5678-9abc-def012345678"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA["NAME            : " + $P{bankAccountName}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="10" y="56" width="300" height="12" uuid="3da12345-1234-5678-9abc-def012345678"/>
+                <textElement>
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["ACCOUNT NO : " + $P{bankAccountNumber}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="10" y="70" width="300" height="12" uuid="4da12345-1234-5678-9abc-def012345678"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA["BANK NAME  : " + $P{bankName}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="10" y="84" width="300" height="12" uuid="5da12345-1234-5678-9abc-def012345678"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA["IFSC             : " + $P{ifsc} + "     BRANCH: " + $P{branch}]]></textFieldExpression>
+            </textField>
+
+            <!-- Bottom Right Box: Financial Totals -->
+            <rectangle>
+                <reportElement x="320" y="24" width="235" height="96" uuid="6da12345-1234-5678-9abc-def012345678"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#000000"/>
+                </graphicElement>
+            </rectangle>
+            <!-- Taxable Amount Row -->
+            <staticText>
+                <reportElement x="325" y="27" width="115" height="13" uuid="7da12345-1234-5678-9abc-def012345678"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[TAXABLE AMOUNT]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="445" y="27" width="105" height="13" uuid="8da12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{taxableAmount}]]></textFieldExpression>
+            </textField>
+            <!-- CGST Row -->
+            <textField>
+                <reportElement x="325" y="42" width="115" height="13" uuid="9da12345-1234-5678-9abc-def012345678"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA["CGST @" + $P{cgstRate}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="445" y="42" width="105" height="13" uuid="ada12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{cgstAmount}]]></textFieldExpression>
+            </textField>
+            <!-- SGST Row -->
+            <textField>
+                <reportElement x="325" y="57" width="115" height="13" uuid="bda12345-1234-5678-9abc-def012345678"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA["SGST @" + $P{sgstRate}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="445" y="57" width="105" height="13" uuid="cda12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{sgstAmount}]]></textFieldExpression>
+            </textField>
+            <!-- IGST Row -->
+            <textField>
+                <reportElement x="325" y="72" width="115" height="13" uuid="dda12345-1234-5678-9abc-def012345678"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA["IGST @" + $P{igstRate}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="445" y="72" width="105" height="13" uuid="eda12345-1234-5678-9abc-def012345678"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{igstAmount}]]></textFieldExpression>
+            </textField>
+            <!-- Round off Row -->
+            <staticText>
+                <reportElement x="325" y="87" width="115" height="13" uuid="fda12345-1234-5678-9abc-def012345678"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <text><![CDATA[ROUND OFF]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="445" y="87" width="105" height="13" uuid="0ea12345-1234-5678-9abc-def012345679"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{roundOffAmount}]]></textFieldExpression>
+            </textField>
+            <!-- Grand Total Row -->
+            <rectangle>
+                <reportElement x="320" y="103" width="235" height="17" backcolor="#F0F0F0" uuid="1ea12345-1234-5678-9abc-def012345679"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#000000"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="325" y="104" width="115" height="15" uuid="2ea12345-1234-5678-9abc-def012345679"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="9" isBold="true"/>
+                </textElement>
+                <text><![CDATA[TOTAL AMOUNT]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="445" y="104" width="105" height="15" uuid="3ea12345-1234-5678-9abc-def012345679"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="9" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{grandTotal}]]></textFieldExpression>
+            </textField>
+
+            <!-- Amount in words Bar -->
+            <rectangle>
+                <reportElement x="0" y="120" width="555" height="24" backcolor="#FAFAFA" uuid="4ea12345-1234-5678-9abc-def012345679"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#000000"/>
+                </graphicElement>
+            </rectangle>
+            <textField textAdjust="StretchHeight">
+                <reportElement x="10" y="122" width="535" height="20" uuid="5ea12345-1234-5678-9abc-def012345679"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Amount (In Words): " + $P{amountInWords}]]></textFieldExpression>
+            </textField>
+
+            <!-- Terms & Conditions Box (Bottom Left) -->
+            <rectangle>
+                <reportElement x="0" y="144" width="320" height="96" uuid="6ea12345-1234-5678-9abc-def012345679"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#000000"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="10" y="146" width="300" height="13" uuid="7ea12345-1234-5678-9abc-def012345679"/>
+                <textElement>
+                    <font size="8" isBold="true" isUnderline="true"/>
+                </textElement>
+                <text><![CDATA[Terms & Conditions:]]></text>
+            </staticText>
+            <textField textAdjust="StretchHeight">
+                <reportElement x="10" y="160" width="300" height="76" uuid="8ea12345-1234-5678-9abc-def012345679"/>
+                <textElement>
+                    <font size="7"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{termsAndConditions}]]></textFieldExpression>
+            </textField>
+
+            <!-- Signatory Box (Bottom Right) -->
+            <rectangle>
+                <reportElement x="320" y="144" width="235" height="96" uuid="9ea12345-1234-5678-9abc-def012345679"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#000000"/>
+                </graphicElement>
+            </rectangle>
+            <textField textAdjust="StretchHeight">
+                <reportElement x="325" y="146" width="225" height="15" uuid="aea12345-1234-5678-9abc-def012345679"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["For " + $P{sellerName}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="325" y="215" width="225" height="15" uuid="bea12345-1234-5678-9abc-def012345679"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Authorized Signatory]]></text>
+            </staticText>
+        </band>
+    </summary>
+
+    <!-- Page Footer -->
+    <pageFooter>
+        <band height="15">
+            <textField>
+                <reportElement x="400" y="0" width="150" height="15" uuid="cea12345-1234-5678-9abc-def012345679"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+
+</jasperReport>
