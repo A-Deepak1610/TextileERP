@@ -132,6 +132,15 @@ public class InvoiceController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{id}/payments")
+    @Operation(summary = "Get invoice payments", description = "Fetch all payments recorded against an invoice.")
+    @ApiResponse(responseCode = "200", description = "Payments returned")
+    @ApiResponse(responseCode = "404", description = "Invoice not found")
+    public ResponseEntity<java.util.List<com.textile.erp.invoice.dto.PaymentResponse>> getInvoicePayments(@PathVariable UUID id) {
+        InvoiceResponse invoice = invoiceService.getInvoiceById(id);
+        return ResponseEntity.ok(invoice.getPayments());
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete draft invoice", description = "Delete a draft invoice. Issued invoices cannot be deleted (only cancelled).")
     @ApiResponse(responseCode = "204", description = "Draft invoice deleted")
