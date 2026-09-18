@@ -545,6 +545,14 @@ public class InvoiceServiceImpl implements InvoiceService {
         if (invoice.getStatus() != InvoiceStatus.ISSUED) {
             throw new IllegalStateException("Payments can only be recorded against ISSUED invoices. Current status: " + invoice.getStatus());
         }
+        if (invoice.getPaymentStatus() == PaymentStatus.PAID) {
+            throw new IllegalStateException("Invoice is already fully paid");
+        }
+        if (request.getAmount().compareTo(invoice.getDueAmount()) > 0) {
+            throw new IllegalArgumentException(String.format(
+                    "Payment amount %s exceeds invoice due amount %s",
+                    request.getAmount(), invoice.getDueAmount()));
+        }
 
         LocalDate payDate = (request.getPaymentDate() != null) ? request.getPaymentDate() : LocalDate.now();
 
