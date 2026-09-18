@@ -86,6 +86,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final InvoiceNumberGenerator invoiceNumberGenerator;
     private final InvoiceStorageService invoiceStorageService;
     private final CustomerLedgerService customerLedgerService;
+    private final com.textile.erp.invoice.infrastructure.outbox.OutboxService outboxService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -285,6 +286,13 @@ public class InvoiceServiceImpl implements InvoiceService {
                     saved.getGrandTotal(), saved.getInvoiceNumber(), "Sales invoice issued"
             );
             saved = invoiceRepository.saveAndFlush(saved);
+            outboxService.publishEvent(
+                    tenantId,
+                    "INVOICE",
+                    saved.getId(),
+                    com.textile.erp.invoice.infrastructure.outbox.InvoicePdfOutboxConsumer.EVENT_TYPE_INVOICE_PDF_REQUESTED,
+                    java.util.Map.of("invoiceId", saved.getId().toString(), "tenantId", tenantId.toString())
+            );
         }
 
         log.info("Created invoice {} (ID: {}) with status {} for tenant {}",
@@ -495,6 +503,13 @@ public class InvoiceServiceImpl implements InvoiceService {
         );
 
         Invoice saved = invoiceRepository.saveAndFlush(invoice);
+        outboxService.publishEvent(
+                tenantId,
+                "INVOICE",
+                saved.getId(),
+                com.textile.erp.invoice.infrastructure.outbox.InvoicePdfOutboxConsumer.EVENT_TYPE_INVOICE_PDF_REQUESTED,
+                java.util.Map.of("invoiceId", saved.getId().toString(), "tenantId", tenantId.toString())
+        );
         log.info("Issued invoice {} (ID: {}) for tenant {}", saved.getInvoiceNumber(), saved.getId(), tenantId);
         return mapToResponse(saved);
     }
