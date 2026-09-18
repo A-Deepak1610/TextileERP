@@ -99,5 +99,17 @@ public class InvoiceItem {
     public void addBale(InvoiceBale bale) {
         bales.add(bale);
         bale.setInvoiceItem(this);
+        if (this.invoice != null) {
+            bale.setInvoice(this.invoice);
+        }
+    }
+
+    public void setInvoice(Invoice invoice) {
+        this.invoice = invoice;
+        if (this.bales != null) {
+            for (InvoiceBale bale : this.bales) {
+                bale.setInvoice(invoice);
+            }
+        }
     }
 }
