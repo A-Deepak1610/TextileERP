@@ -25,3 +25,5 @@ desktop.ini
 target/
 dist/
 node_modules/
+uploads/
+
