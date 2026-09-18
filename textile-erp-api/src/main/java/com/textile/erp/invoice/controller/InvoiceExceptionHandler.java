@@ -75,4 +75,54 @@ public class InvoiceExceptionHandler {
         body.put("message", sb.length() > 0 ? sb.toString() : "Validation failed");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
+
+    @ExceptionHandler(com.textile.erp.invoice.domain.InvoiceNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleInvoiceNotFound(com.textile.erp.invoice.domain.InvoiceNotFoundException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", Instant.now().toString());
+        body.put("status", HttpStatus.NOT_FOUND.value());
+        body.put("error", "Not Found");
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
+
+    @ExceptionHandler(com.textile.erp.invoice.domain.InvoiceNotIssuedException.class)
+    public ResponseEntity<Map<String, Object>> handleInvoiceNotIssued(com.textile.erp.invoice.domain.InvoiceNotIssuedException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", Instant.now().toString());
+        body.put("status", HttpStatus.CONFLICT.value());
+        body.put("error", "Conflict");
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    @ExceptionHandler(com.textile.erp.invoice.domain.InvoicePdfNotReadyException.class)
+    public ResponseEntity<Map<String, Object>> handleInvoicePdfNotReady(com.textile.erp.invoice.domain.InvoicePdfNotReadyException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", Instant.now().toString());
+        body.put("status", HttpStatus.CONFLICT.value());
+        body.put("error", "Conflict");
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    @ExceptionHandler(com.textile.erp.invoice.domain.InvoicePdfGenerationException.class)
+    public ResponseEntity<Map<String, Object>> handleInvoicePdfGeneration(com.textile.erp.invoice.domain.InvoicePdfGenerationException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", Instant.now().toString());
+        body.put("status", HttpStatus.UNPROCESSABLE_ENTITY.value());
+        body.put("error", "Unprocessable Entity");
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
+    }
+
+    @ExceptionHandler(com.textile.erp.invoice.domain.DocumentAccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleDocumentAccessDenied(com.textile.erp.invoice.domain.DocumentAccessDeniedException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", Instant.now().toString());
+        body.put("status", HttpStatus.FORBIDDEN.value());
+        body.put("error", "Forbidden");
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
+    }
 }

@@ -53,8 +53,8 @@ public class InvoicePdfDataMapper {
 
                 itemRows.add(InvoiceItemPdfData.builder()
                         .serialNumber(serial++)
-                        .description(item.getDescription() != null ? item.getDescription() : "")
-                        .hsnCode(item.getHsnCode() != null ? item.getHsnCode() : "")
+                        .description(item.getDescriptionSnapshot() != null ? item.getDescriptionSnapshot() : "")
+                        .hsnCode(item.getHsnCodeSnapshot() != null ? item.getHsnCodeSnapshot() : "")
                         .meters(formatMeters(item.getMeters()))
                         .foldingLessPercent(formatPercent(item.getFoldingLessPercent()))
                         .foldingLessMeters(formatMeters(item.getFoldingLessMeters()))
