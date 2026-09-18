@@ -73,19 +73,31 @@ public class InvoicePdfApplicationService {
             }
         }
 
-        InvoiceDocumentEntity document = existingDocOpt.orElseGet(() -> InvoiceDocumentEntity.builder()
-                .tenantId(tenantId)
-                .invoiceId(invoiceId)
-                .documentType(DOCUMENT_TYPE_INVOICE_PDF)
-                .storageProvider(STORAGE_PROVIDER_LOCAL)
-                .storageKey("")
-                .fileName("")
-                .fileSize(0L)
-                .status(InvoicePdfStatus.PENDING)
-                .build());
-
-        document.setStatus(InvoicePdfStatus.GENERATING);
-        document = invoiceDocumentRepository.saveAndFlush(document);
+        InvoiceDocumentEntity document;
+        try {
+            document = existingDocOpt.orElseGet(() -> InvoiceDocumentEntity.builder()
+                    .tenantId(tenantId)
+                    .invoiceId(invoiceId)
+                    .documentType(DOCUMENT_TYPE_INVOICE_PDF)
+                    .storageProvider(STORAGE_PROVIDER_LOCAL)
+                    .storageKey("")
+                    .fileName("")
+                    .fileSize(0L)
+                    .status(InvoicePdfStatus.PENDING)
+                    .build());
+            document.setStatus(InvoicePdfStatus.GENERATING);
+            document = invoiceDocumentRepository.saveAndFlush(document);
+        } catch (org.springframework.dao.DataIntegrityViolationException dive) {
+            // Concurrent creation occurred - reload existing
+            document = invoiceDocumentRepository
+                    .findByTenantIdAndInvoiceIdAndDocumentType(tenantId, invoiceId, DOCUMENT_TYPE_INVOICE_PDF)
+                    .orElseThrow(() -> dive);
+            if (document.getStatus() == InvoicePdfStatus.READY && !force) {
+                return document;
+            }
+            document.setStatus(InvoicePdfStatus.GENERATING);
+            document = invoiceDocumentRepository.saveAndFlush(document);
+        }
 
         try {
             // 1. Map invoice entities & snapshots to PDF data
