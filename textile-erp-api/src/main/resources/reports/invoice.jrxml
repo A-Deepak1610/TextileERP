@@ -397,6 +397,19 @@ METER]]></text>
         </band>
     </detail>
 
+    <!-- Page Footer -->
+    <pageFooter>
+        <band height="15">
+            <textField>
+                <reportElement x="400" y="0" width="150" height="15" uuid="cea12345-1234-5678-9abc-def012345679"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+
     <!-- Summary (Totals, Bank Details, Terms, Signatory) -->
     <summary>
         <band height="250" splitType="Stretch">
@@ -629,18 +642,5 @@ METER]]></text>
             </staticText>
         </band>
     </summary>
-
-    <!-- Page Footer -->
-    <pageFooter>
-        <band height="15">
-            <textField>
-                <reportElement x="400" y="0" width="150" height="15" uuid="cea12345-1234-5678-9abc-def012345679"/>
-                <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font size="8"/>
-                </textElement>
-                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER}]]></textFieldExpression>
-            </textField>
-        </band>
-    </pageFooter>
 
 </jasperReport>
