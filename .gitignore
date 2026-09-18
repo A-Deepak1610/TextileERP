@@ -26,4 +26,5 @@ target/
 dist/
 node_modules/
 uploads/
+*.pdf
 

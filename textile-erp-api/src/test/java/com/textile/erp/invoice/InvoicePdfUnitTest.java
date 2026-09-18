@@ -200,6 +200,12 @@ class InvoicePdfUnitTest {
         // Standard PDF magic header: %PDF
         String header = new String(pdfBytes, 0, 4, StandardCharsets.US_ASCII);
         assertThat(header).isEqualTo("%PDF");
+
+        // Export sample PDF for visual inspection
+        try {
+            Files.write(Path.of("../sample_invoice.pdf"), pdfBytes);
+        } catch (Exception ignored) {
+        }
     }
 
     @Test
