@@ -6,7 +6,7 @@ import com.textile.erp.agent.dto.UpdateAgentRequest;
 import com.textile.erp.agent.entity.Agent;
 import com.textile.erp.agent.entity.CommissionType;
 import com.textile.erp.agent.repository.AgentRepository;
-import com.textile.erp.auth.model.CurrentUser;
+import com.textile.erp.auth.security.CurrentUser;
 import com.textile.erp.auth.security.SecurityUtils;
 import java.math.BigDecimal;
 import java.util.NoSuchElementException;

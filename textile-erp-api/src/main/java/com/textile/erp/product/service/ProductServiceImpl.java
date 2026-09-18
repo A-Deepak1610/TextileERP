@@ -1,6 +1,6 @@
 package com.textile.erp.product.service;
 
-import com.textile.erp.auth.model.CurrentUser;
+import com.textile.erp.auth.security.CurrentUser;
 import com.textile.erp.auth.security.SecurityUtils;
 import com.textile.erp.product.dto.CreateProductRequest;
 import com.textile.erp.product.dto.ProductResponse;
